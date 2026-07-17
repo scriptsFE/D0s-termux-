@@ -122,7 +122,7 @@ stats = {
     "total": 0
 }
 
-async def worker(session, target_url, semaphore):
+async def worker(bot_id, session, target_url, semaphore):
     while True:
         async with semaphore:
             try:
@@ -135,6 +135,8 @@ async def worker(session, target_url, semaphore):
                         stats["success"] += 1
                     else:
                         stats["errors"] += 1
+                    print(f"[Bot {bot_id}] Visited target (Status {response.status})")
+                    sys.stdout.flush()
             except Exception:
                 stats["errors"] += 1
             finally:
@@ -183,8 +185,8 @@ async def main():
     async with aiohttp.ClientSession(connector=connector) as session:
         reporter_task = asyncio.create_task(stats_reporter())
         workers = [
-            asyncio.create_task(worker(session, target_url, semaphore))
-            for _ in range(concurrency_limit)
+            asyncio.create_task(worker(i + 1, session, target_url, semaphore))
+            for i in range(concurrency_limit)
         ]
         
         try:
